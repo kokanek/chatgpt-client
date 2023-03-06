@@ -1,7 +1,8 @@
-import { Flex, Stack, Text, Image, Input, IconButton, Box, Spinner } from '@chakra-ui/react';
+import { Flex, Stack, Text, Image, Input, IconButton, Box, Button } from '@chakra-ui/react';
 import { IoSend, IoSettings } from 'react-icons/io5'
 import ChakraUIRenderer from 'chakra-ui-markdown-renderer';
 import ReactMarkdown from 'react-markdown'
+import BeatLoader from "react-spinners/BeatLoader";
 import { useEffect, useState } from 'react';
 
 export default function Home() {
@@ -16,23 +17,19 @@ export default function Home() {
 
   const onSendClick = async () => {
     if (text === '') return;
-
-    try {
-      setText('');
-      setLoading(true);
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer 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'
-        },
-        body: JSON.stringify({
-          "model": "gpt-3.5-turbo",
-          "messages": [{ "role": "user", "content": text }]
-        })
-      });
-      setLoading(false);
-
+    setText('');
+    setLoading(true);
+    fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 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'
+      },
+      body: JSON.stringify({
+        "model": "gpt-3.5-turbo",
+        "messages": [{ "role": "user", "content": text }]
+      })
+    }).then(async (res) => {
       if (res.status === 200) {
         const json = await res.json();
         const reply = json.choices[0].message;
@@ -40,12 +37,14 @@ export default function Home() {
       } else {
         console.log(res);
       }
-    } catch (e) {
+    }).catch((e) => {
       console.log(e);
-    }
+    }).finally(() => {
+      setLoading(false);
+    });
   }
 
-  console.log('messages: ', messages);
+  console.log('loading: ', loading);
   return (
     <Flex w="100%" h="100vh" justify="center" align="center" className='backgroundPattern'>
       <Flex w={["100%", "60%", "50%"]} h="100%" flexDir="column" bgColor="white">
@@ -60,19 +59,26 @@ export default function Home() {
             <Text color={'white'}>Ask me anything!</Text>
           </Stack>
         </Stack>
-        <Stack h="100%" py={4} spacing={2} bgColor="gray.100" direction={'column-reverse'} overflowY="auto">
-          {loading ? <Spinner
-            thickness='4px'
-            speed='0.65s'
-            emptyColor='gray.200'
-            color='blue.500'
-            size='xl'
-          /> :
+        <Flex h="100%" py={4} bgColor="gray.100" direction={'column-reverse'} overflowY="auto">
+          {loading && (
+            <Box
+              alignSelf={'flex-start'}
+              marginLeft={2}
+              p={2}
+              rounded={'xl'}>
+              <Button
+                isLoading={loading}
+                colorScheme='blue'
+                spinner={<BeatLoader size={8} color='white' />}
+              />
+            </Box>)
+          }
+          {
             messages.map((m) => (
-              m.role === 'assistant' ? <ResponseMessage key={m.content} bgColor={'red'}>{m.content}</ResponseMessage> : <SentMessage key={m.content} bgColor={'blue'}>{m.content}</SentMessage>
+              m.role === 'assistant' ? <ResponseMessage key={m.content}>{m.content}</ResponseMessage> : <SentMessage key={m.content}>{m.content}</SentMessage>
             ))
           }
-        </Stack>
+        </Flex>
         <Stack py={2} px={2} direction={'row'} align={'center'} spacing={2} >
           <Input
             size='lg'
@@ -92,6 +98,8 @@ export default function Home() {
             aria-label='Call Segun'
             size='lg'
             icon={<IoSettings />}
+            isLoading
+            spinner={<BeatLoader size={8} color='white' />}
           />
           <IconButton
             colorScheme='teal'
@@ -112,12 +120,10 @@ const SentMessage = ({ children }) => {
       bg={'white'}
       boxShadow={'lg'}
       mx={2}
+      my={2}
       p={2}
       width={'80%'}
       rounded={'xl'}>
-      {/* <pre>
-        {children}
-      </pre> */}
       <ReactMarkdown
         components={ChakraUIRenderer()}
         // eslint-disable-next-line react/no-children-prop
@@ -133,7 +139,8 @@ const ResponseMessage = ({ children }) => {
       alignSelf={'flex-start'}
       bg={'green.100'}
       boxShadow={'lg'}
-      marginLeft={2}
+      mx={2}
+      my={2}
       p={2}
       width={'80%'}
       rounded={'xl'}>
@@ -146,5 +153,3 @@ const ResponseMessage = ({ children }) => {
     </Box>
   );
 };
-
-console.log(SentMessage);
