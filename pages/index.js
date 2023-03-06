@@ -119,7 +119,6 @@ export default function Home() {
             <Input
               pr='4rem'
               type={'text'}
-              value={openAIKey}
               placeholder='Your open AI key'
               onChange={(e) => setApiKey(e.target.value)}
             />
