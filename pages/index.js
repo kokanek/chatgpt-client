@@ -1,5 +1,7 @@
 import { Flex, Stack, Text, Image, Input, IconButton, Box, Spinner } from '@chakra-ui/react';
 import { IoSend, IoSettings } from 'react-icons/io5'
+import ChakraUIRenderer from 'chakra-ui-markdown-renderer';
+import ReactMarkdown from 'react-markdown'
 import { useEffect, useState } from 'react';
 
 export default function Home() {
@@ -79,6 +81,11 @@ export default function Home() {
             placeholder='Chat here...'
             onChange={onTextType}
             value={text}
+            onKeyUp={(e) => {
+              if (e.code === 'Enter') {
+                onSendClick();
+              }
+            }}
           />
           <IconButton
             colorScheme='blue'
@@ -108,7 +115,14 @@ const SentMessage = ({ children }) => {
       p={2}
       width={'80%'}
       rounded={'xl'}>
-      <Text>{children}</Text>
+      {/* <pre>
+        {children}
+      </pre> */}
+      <ReactMarkdown
+        components={ChakraUIRenderer()}
+        // eslint-disable-next-line react/no-children-prop
+        children={children}
+        skipHtml />
     </Box>
   );
 };
@@ -123,7 +137,12 @@ const ResponseMessage = ({ children }) => {
       p={2}
       width={'80%'}
       rounded={'xl'}>
-      <Text>{children}</Text>
+      {/* <pre>{children}</pre> */}
+      <ReactMarkdown
+        components={ChakraUIRenderer()}
+        // eslint-disable-next-line react/no-children-prop
+        children={children}
+        skipHtml />
     </Box>
   );
 };
