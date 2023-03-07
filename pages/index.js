@@ -56,10 +56,9 @@ export default function Home() {
     console.log('reached here: ', text);
     if (text === '') return;
     setText('');
+    setMessages([...messages, { role: 'user', content: text }]);
     setLoading(true);
 
-    const reversedMessages = [...messages];
-    reversedMessages.reverse();
     fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -68,13 +67,13 @@ export default function Home() {
       },
       body: JSON.stringify({
         "model": "gpt-3.5-turbo",
-        "messages": [...reversedMessages, { "role": "user", "content": text }]
+        "messages": [...messages, { "role": "user", "content": text }]
       })
     }).then(async (res) => {
       if (res.status === 200) {
         const json = await res.json();
         const reply = json.choices[0].message;
-        setMessages([reply, { role: 'user', content: text }, ...messages]);
+        setMessages((currentMessages) => [...currentMessages, reply]);
       } else {
         console.log(res);
       }
@@ -133,32 +132,33 @@ export default function Home() {
             </InputRightElement>
           </InputGroup>
         </Stack>}
-        <Flex h="100%" py={4} bgColor="gray.100" direction={'column-reverse'} overflowY="auto">
-          {loading && (
-            <Box
-              alignSelf={'flex-start'}
-              marginLeft={2}
-              p={2}
-              rounded={'xl'}>
-              <Button
-                isLoading={loading}
-                colorScheme='green'
-                spinner={<BeatLoader size={8} color='white' />}
-              />
-            </Box>)
-          }
-          {
-            messages.map((m) => (
-              m.role === 'assistant' ? <ResponseMessage key={m.content}>{m.content}</ResponseMessage> : <SentMessage key={m.content}>{m.content}</SentMessage>
-            ))
-          }
+        <Flex h="84%" direction={'column'} justify={'flex-end'}>
+          <Flex minH="100%" direction={'column'} overflow='auto' py={4} bgColor="gray.100"  >
+            {
+              messages.map((m) => (
+                m.role === 'assistant' ? <ResponseMessage key={m.content}>{m.content}</ResponseMessage> : <SentMessage key={m.content}>{m.content}</SentMessage>
+              ))
+            }
+            {loading && (
+              <Box
+                alignSelf={'flex-start'}
+                p={2}
+                rounded={'xl'}>
+                <Button
+                  isLoading={loading}
+                  colorScheme='green'
+                  spinner={<BeatLoader size={8} color='white' />}
+                />
+              </Box>)
+            }
+          </Flex>
         </Flex>
         <Stack py={2} px={2} direction={'row'} align={'center'} spacing={2} >
           <Input
             size='lg'
             pr='4rem'
             type={'text'}
-            placeholder={openAIKey ? 'Chat here...' : 'Please set your open AI key first'}
+            placeholder={openAIKey ? 'Chat here...' : 'Please set your open AI key in the top box'}
             onChange={onTextType}
             value={text}
             onKeyUp={(e) => {
@@ -167,13 +167,12 @@ export default function Home() {
               }
             }}
           />
-          <IconButton
-            disabled={openAIKey.trim() === ''}
+          {openAIKey.trim() && <IconButton
             colorScheme='teal'
             aria-label='Call Segun'
             size='lg'
             icon={<IoSend onClick={() => onSendClick()} />}
-          />
+          />}
         </Stack>
       </Flex>
     </Flex>
@@ -188,7 +187,8 @@ const SentMessage = ({ children }) => {
       boxShadow={'lg'}
       mx={2}
       my={2}
-      p={2}
+      px={2}
+      pt={2}
       width={'80%'}
       rounded={'xl'}>
       <ReactMarkdown
